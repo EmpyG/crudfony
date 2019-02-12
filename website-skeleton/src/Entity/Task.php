@@ -2,10 +2,14 @@
 
 namespace App\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\PrePersist;
+use Doctrine\ORM\Mapping\PreUpdate;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\TaskRepository")
+ * @ORM\HasLifecycleCallbacks
  */
 class Task
 {
@@ -104,5 +108,21 @@ class Task
         $this->active = $active;
 
         return $this;
+    }
+
+    /** @PrePersist
+     * @throws \Exception
+     */
+    public function addCreatedAtTime()
+    {
+        $this->createdAt = new DateTime('now');
+    }
+
+    /** @PreUpdate
+     * @throws \Exception
+     */
+    public function addUpdatedAtTime()
+    {
+        $this->updatedAt = new DateTime('now');
     }
 }
