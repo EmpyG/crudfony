@@ -44,7 +44,7 @@ class TaskController extends AbstractController
         } catch (Throwable $e) {
             $this->addFlash('error', $e->getMessage());
         } finally {
-            return JsonResponse::create($task);
+            return JsonResponse::create($this);
         }
     }
 
