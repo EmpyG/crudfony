@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Services\TaskService;
@@ -28,11 +29,11 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route("/task/c", name="app_create")
+     * @Route("/task", method={"POST"}, name="app_create")
      * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @return JsonResponse
      */
-    public function createTask(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $title = $request->request->get('title');
         $description = $request->request->get('description');
@@ -43,38 +44,40 @@ class TaskController extends AbstractController
         } catch (Throwable $e) {
             $this->addFlash('error', $e->getMessage());
         } finally {
-            return $this->redirectToRoute('app_show');
+            return JsonResponse::create($task);
         }
     }
 
     /**
-     * @Route("/task/u", name="app_update")
+     * @Route("/task/{id}", method={"PUT"}, name="app_update")
      * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @param int     $id
+     * @return JsonResponse
+     * @throws \App\Exceptions\TaskNotFoundException
      */
-    public function updateTask(Request $request)
+    public function update(Request $request, int $id): JsonResponse
     {
-        $id = $request->request->get('id');
         $title = $request->request->get('title');
         $description = $request->request->get('description');
         $active = $request->request->get('active');
 
-        try {
-            $task = $this->taskService->update($id, $title, $description, $active);
-            $this->addFlash('success', 'Succesfully updated the task!');
-        } catch (Throwable $e) {
-            $this->addFlash('error', $e->getMessage());
-        } finally {
-            return $this->redirectToRoute('app_show');
-        }
+        $task = $this->taskService->update($id, $title, $description, $active);
+
+        return JsonResponse::create($task);
     }
 
-    public function deleteTask(Request $request)
+    /**
+     * @Route ("/task", method={"DELETE"}, name="app_delete")
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \App\Exceptions\TaskNotFoundException
+     */
+    public function delete(Request $request): JsonResponse
     {
         $id = $request->request->get('id');
 
         $this->taskService->delete($id);
 
-        return $this->redirectToRoute('task_show');
+        return JsonResponse::create($this);
     }
 }
