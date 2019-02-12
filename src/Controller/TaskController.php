@@ -29,7 +29,7 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route("/task", method={"POST"}, name="app_create")
+     * @Route("/task", methods={"POST"}, name="app_create")
      * @param Request $request
      * @return JsonResponse
      */
@@ -49,7 +49,7 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route("/task/{id}", method={"PUT"}, name="app_update")
+     * @Route("/task/{id}", methods={"PUT"}, name="app_update")
      * @param Request $request
      * @param int     $id
      * @return JsonResponse
@@ -67,7 +67,7 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route ("/task", method={"DELETE"}, name="app_delete")
+     * @Route ("/task", methods={"DELETE"}, name="app_delete")
      * @param Request $request
      * @return JsonResponse
      * @throws \App\Exceptions\TaskNotFoundException
