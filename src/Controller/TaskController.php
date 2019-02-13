@@ -1,7 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Exceptions\TaskNotFoundException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,6 +12,10 @@ use Throwable;
 
 class TaskController extends AbstractController
 {
+    private const TITLE = 'title';
+    private const DESCRIPTION = 'description';
+    private const ACTIVE = 'active';
+
     private $taskService;
 
     public function __construct(TaskService $taskService)
@@ -19,65 +24,96 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route("/task", name="app_show")
-     */
-    public function index()
-    {
-        return $this->render('task/index.html.twig', [
-            'controller_name' => 'TaskController',
-        ]);
-    }
-
-    /**
-     * @Route("/task", methods={"POST"}, name="app_create")
+     * @Route("/task", methods={"POST"}, name="app_create_task")
      * @param Request $request
      * @return JsonResponse
      */
     public function create(Request $request): JsonResponse
     {
-        $title = $request->request->get('title');
-        $description = $request->request->get('description');
+        $title = $request->request->get(self::TITLE);
+        $description = $request->request->get(self::DESCRIPTION);
+        $accountId = (int)$request->request->get('account');
 
         try {
-            $task = $this->taskService->create($title, $description);
-            $this->addFlash('success', 'Succesfully added new task!');
+            $task = $this->taskService->create($accountId, $title, $description);
+            return JsonResponse::create($this->taskService::format($task));
         } catch (Throwable $e) {
-            $this->addFlash('error', $e->getMessage());
-        } finally {
-            return JsonResponse::create($this);
+            return JsonResponse::create($e->getMessage());
         }
     }
 
     /**
-     * @Route("/task/{id}", methods={"PUT"}, name="app_update")
+     * @Route("/task/{id}", methods={"PUT"}, name="app_update_task")
      * @param Request $request
      * @param int     $id
      * @return JsonResponse
-     * @throws \App\Exceptions\TaskNotFoundException
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        $title = $request->request->get('title');
-        $description = $request->request->get('description');
-        $active = $request->request->get('active');
+        $title = $request->request->get(self::TITLE);
+        $description = $request->request->get(self::DESCRIPTION);
+        $active = $request->request->get(self::ACTIVE);
 
-        $task = $this->taskService->update($id, $title, $description, $active);
-
-        return JsonResponse::create($task);
+        try {
+            $task = $this->taskService->update($id, $title, $description, $active);
+            return JsonResponse::create($task);
+        } catch (TaskNotFoundException $e) {
+            return JsonResponse::create($e->getMessage());
+        }
     }
 
     /**
-     * @Route ("/task", methods={"DELETE"}, name="app_delete")
-     * @param Request $request
+     * @Route("/task/{id}", methods={"GET"}, name="app_read_task")
+     * @param int $id
      * @return JsonResponse
-     * @throws \App\Exceptions\TaskNotFoundException
      */
-    public function delete(Request $request): JsonResponse
+    public function read(int $id): JsonResponse
     {
-        $id = $request->request->get('id');
-
-        $this->taskService->delete($id);
-
-        return JsonResponse::create($this);
+        try {
+            $task = $this->taskService->read($id);
+            return JsonResponse::create($this->taskService::format($task));
+        } catch (TaskNotFoundException $e) {
+            return JsonResponse::create($e->getMessage());
+        }
     }
+
+    /**
+     * @Route("/task", methods={"GET"}, name="app_read_tasks")
+     * @return JsonResponse
+     */
+    public function readAll(): JsonResponse
+    {
+        $tasks = $this->taskService->readAll();
+        $response = [];
+        foreach ($tasks as $each) {
+            $response[] = $this->taskService::format($each);
+        }
+
+        return JsonResponse::create($response);
+    }
+
+    /**
+     * @Route ("/task/{id}", methods={"DELETE"}, name="app_delete_task")
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function delete(int $id): JsonResponse
+    {
+        try {
+            $this->taskService->delete($id);
+            return JsonResponse::create([], 204);
+        } catch (TaskNotFoundException $e) {
+            return JsonResponse::create($e->getMessage());
+        }
+
+    }
+
+//    /**
+//     * @param int $id
+//     * @return JsonResponse
+//     */
+//    public function readUserTasks(int $id):JsonResponse
+//    {
+//
+//    }
 }

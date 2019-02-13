@@ -1,9 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Services;
 
 use App\Entity\Task;
 use App\Exceptions\TaskNotFoundException;
+use App\Exceptions\UserNotFoundException;
 use App\Repository\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -11,34 +12,43 @@ class TaskService
 {
     private $taskRepository;
     private $entityManager;
+    private $userService;
 
-    private const ACTIVE = 1;
+    private const ACTIVE = true;
 
     /**
      * TaskService constructor.
      *
      * @param TaskRepository         $taskRepository
+     * @param UserService            $userService
      * @param EntityManagerInterface $entityManager
      */
-    public function __construct(TaskRepository $taskRepository, EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        TaskRepository $taskRepository,
+        UserService $userService,
+        EntityManagerInterface $entityManager
+    ) {
         $this->taskRepository = $taskRepository;
+        $this->userService = $userService;
         $this->entityManager = $entityManager;
     }
 
     /**
+     * @param int    $accountId
      * @param string $title
      * @param string $description
      * @return Task
-     * @throws \Exception
+     * @throws UserNotFoundException
      */
-    public function create(string $title, string $description)
+    public function create(int $accountId, string $title, ? string $description)
     {
         $task = new Task();
+        $account = $this->userService->read($accountId);
 
         $task->setTitle($title)
              ->setDescription($description)
-             ->setActive(self::ACTIVE);
+             ->setActive(self::ACTIVE)
+             ->setUser($account);
 
         $this->entityManager->persist($task);
         $this->entityManager->flush();
@@ -60,6 +70,11 @@ class TaskService
         }
 
         return $task;
+    }
+
+    public function readAll(): array
+    {
+        return $this->taskRepository->findAll();
     }
 
     /**
@@ -96,5 +111,28 @@ class TaskService
         $this->entityManager->flush();
 
         return $task;
+    }
+
+    /**
+     * @param int $userId
+     * @return array
+     * @throws UserNotFoundException
+     */
+    public function readRelated(int $userId): array
+    {
+        $user = $this->userService->read($userId);
+        return $tasks = $this->taskRepository->findBy(['user' => $user]);
+    }
+
+    public static function format(Task $task): array
+    {
+        return [
+            'id'          => $task->getId(),
+            'title'       => $task->getTitle(),
+            'description' => $task->getDescription(),
+            'createdAt'   => $task->getCreatedAt(),
+            'updatedAt'   => $task->getUpdatedAt(),
+            'active'      => $task->getActive()
+        ];
     }
 }

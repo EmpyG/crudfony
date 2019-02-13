@@ -45,6 +45,12 @@ class Task
      */
     private $active;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="tasks")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $user;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -116,6 +122,7 @@ class Task
     public function addCreatedAtTime()
     {
         $this->createdAt = new DateTime('now');
+        $this->updatedAt = new DateTime('now');
     }
 
     /** @PreUpdate
@@ -124,5 +131,17 @@ class Task
     public function addUpdatedAtTime()
     {
         $this->updatedAt = new DateTime('now');
+    }
+
+    public function getUser(): ?user
+    {
+        return $this->user;
+    }
+
+    public function setUser(?user $user): self
+    {
+        $this->user = $user;
+
+        return $this;
     }
 }
