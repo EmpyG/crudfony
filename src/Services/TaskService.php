@@ -121,9 +121,13 @@ class TaskService
     public function readRelated(int $userId): array
     {
         $user = $this->userService->read($userId);
-        return $tasks = $this->taskRepository->findBy(['user' => $user]);
+        return $this->taskRepository->findBy(['user' => $user]);
     }
 
+    /**
+     * @param Task $task
+     * @return array
+     */
     public static function format(Task $task): array
     {
         return [
@@ -132,7 +136,7 @@ class TaskService
             'description' => $task->getDescription(),
             'createdAt'   => $task->getCreatedAt(),
             'updatedAt'   => $task->getUpdatedAt(),
-            'active'      => $task->getActive()
+            'active'      => $task->getActive(),
         ];
     }
 }

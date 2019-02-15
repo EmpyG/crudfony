@@ -108,12 +108,20 @@ class TaskController extends AbstractController
 
     }
 
-//    /**
-//     * @param int $id
-//     * @return JsonResponse
-//     */
-//    public function readUserTasks(int $id):JsonResponse
-//    {
-//
-//    }
+    /**
+     * @Route("/tasks/{userId}", methods={"GET"}, name="app_user_tasks")
+     * @param int $userId
+     * @return JsonResponse
+     * @throws \App\Exceptions\UserNotFoundException
+     */
+    public function readUserTasks(int $userId): JsonResponse
+    {
+        $tasks = $this->taskService->readRelated($userId);
+        $response = [];
+        foreach ($tasks as $each) {
+            $response[] = $this->taskService::format($each);
+        }
+
+        return JsonResponse::create($response);
+    }
 }
